@@ -1,7 +1,6 @@
 package com.brasa.user;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
@@ -19,7 +18,6 @@ public class UserEntity {
     )
     private Integer id;
 
-    @NotBlank
     private String username;
     private String password;
     private String email;

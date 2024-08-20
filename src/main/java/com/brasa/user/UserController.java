@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api")
@@ -26,28 +25,16 @@ public class UserController {
 
     @PostMapping("/createuser")
     public ResponseEntity<?> addUser(@RequestBody UserEntity user) {
+        UserValidator validator = new UserValidator();
+
         if(this.userRepository.existsByUsername(user.getUsername())) {
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
                     .body("Username already exists.");
         }
 
-        if (user.getUsername() == null || user.getUsername().isBlank()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Username cannot be empty.");
-        }
-
-        if (user.getPassword().length() > 16) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Username maximum length is 16.");
-        }
-
-        if (!Pattern.matches("^[a-zA-Z0-9]{1,16}$", user.getUsername())) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Username contains invalid character.");
+        if (!validator.isUsernameValid(user.getUsername())) {
+            return validator.getResponse();
         }
 
         this.userRepository.save(user);
@@ -67,6 +54,7 @@ public class UserController {
         }
 
         //update info here
+        //use validator
 
         this.userRepository.save(existingUser);
         return ResponseEntity
