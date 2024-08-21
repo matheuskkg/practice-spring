@@ -1,20 +1,22 @@
 package com.brasa.user;
 
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@AllArgsConstructor
 public class UserController {
 
     private final UserRepository userRepository;
 
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    public record ResponseMsg(String defaultMessage) {}
 
     @GetMapping("/getall")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
@@ -24,17 +26,18 @@ public class UserController {
     }
 
     @PostMapping("/createuser")
-    public ResponseEntity<?> addUser(@RequestBody UserEntity user) {
-        UserValidator validator = new UserValidator();
-
-        if(this.userRepository.existsByUsername(user.getUsername())) {
+    public ResponseEntity<?> addUser(@RequestBody @Valid UserEntity user, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
-                    .body("Username already exists.");
+                    .body(new ResponseMsg(bindingResult.getFieldError().getDefaultMessage()));
         }
 
-        if (!validator.isUsernameValid(user.getUsername())) {
-            return validator.getResponse();
+        //must find how to remove this
+        if (this.userRepository.existsByUsername(user.getUsername())) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new ResponseMsg("Username already in use."));
         }
 
         this.userRepository.save(user);
@@ -44,7 +47,7 @@ public class UserController {
     }
 
     @PatchMapping("/updateuser/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserEntity user) {
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserEntity updatedUser) {
         UserEntity existingUser = this.userRepository.findById(id).orElse(null);
 
         if (existingUser == null) {
@@ -54,7 +57,6 @@ public class UserController {
         }
 
         //update info here
-        //use validator
 
         this.userRepository.save(existingUser);
         return ResponseEntity
