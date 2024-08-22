@@ -1,5 +1,6 @@
 package com.brasa.user;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,71 +18,76 @@ public class UserController {
 
     private final UserRepository userRepository;
 
-    public record ResponseMsg(String defaultMessage) {}
-
     @GetMapping
     public ResponseEntity<List<UserEntity>> getAllUsers() {
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(this.userRepository.findAll());
+        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getUserById(@PathVariable Integer id) {
-        UserEntity user = this.userRepository.findById(id).orElse(null);
+    public ResponseEntity<?> getUserById(@PathVariable Integer id) {
+        Optional<UserEntity> optionalUser = userRepository.findById(id);
 
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseMsg("User not found"));
+        if (optionalUser.isPresent()) {
+            return ResponseEntity.status(HttpStatus.OK).body(optionalUser);
+        } else {
+            throw new EntityNotFoundException("User with id " + id + " not found");
+        }
+    }
+
+    private void verifyRequest(UserRequest request, BindingResult errors) {
+        //The @Column(unique = true) on the Entity declaration will check for uniqueness on the database,
+        //but it may be bypassed, therefore the application should also check for it
+        if (userRepository.existsByUsername(request.username())) {
+            errors.rejectValue("username", "Unique", "username in use");
         }
 
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(user);
+        if (userRepository.existsByEmail(request.email())) {
+            errors.rejectValue("email", "Unique", "email in use");
+        }
     }
 
     @PostMapping
-    public ResponseEntity<?> addUser(@RequestBody @Valid UserEntity user, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
+    public ResponseEntity<?> addUser(@RequestBody @Valid UserRequest request, BindingResult errors) {
+        verifyRequest(request, errors);
+
+        if (errors.hasErrors()) {
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
-                    .body(new ResponseMsg(bindingResult.getFieldError().getDefaultMessage()));
+                    .body(errors.getAllErrors());
         }
 
-        //must find how to remove this
-        if (this.userRepository.existsByUsername(user.getUsername())) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(new ResponseMsg("Username already in use."));
-        }
-
-        this.userRepository.save(user);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .build();
+        UserEntity user = new UserEntity(request);
+        userRepository.save(user);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserEntity updatedUser) {
-        UserEntity existingUser = this.userRepository.findById(id).orElse(null);
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody @Valid UserRequest request, BindingResult errors) {
+        Optional<UserEntity> optionalUser = userRepository.findById(id);
 
-        if (existingUser == null) {
+        verifyRequest(request, errors);
+
+        if (errors.hasErrors()) {
             return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body("User not found.");
+                    .status(HttpStatus.CONFLICT)
+                    .body(errors.getAllErrors());
         }
 
-        //update info here
-
-
-        this.userRepository.save(existingUser);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .build();
+        if (optionalUser.isPresent()) {
+            UserEntity user = optionalUser.get();
+            user.setUsername(request.username());
+            user.setPassword(request.password());
+            user.setEmail(request.email());
+            userRepository.save(user);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        this.userRepository.deleteById(id);
+        userRepository.deleteById(id);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

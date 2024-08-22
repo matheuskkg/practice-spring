@@ -1,11 +1,12 @@
 package com.brasa.user;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity
 public class UserEntity {
 
@@ -20,16 +21,18 @@ public class UserEntity {
     )
     private Integer id;
 
-    @NotNull(message = "Please provide a username.")
-    @Pattern(regexp = "^[a-zA-Z0-9]{1,16}$", message = "The username must be alphanumeric, cannot contain spaces, and must be between 1 and 16 characters in length.")
+    @Column(unique = true)
     private String username;
 
-    @NotNull(message = "Please provide a password.")
     private String password;
 
-    @NotBlank(message = "Please provide a email address.")
-    @NotNull(message = "Please provide a email address.")
-    @Email(message = "Please provide a valid email address.")
+    @Column(unique = true)
     private String email;
+
+    public UserEntity(UserRequest request) {
+        this.username = request.username();
+        this.password = request.password();
+        this.email = request.email();
+    }
 
 }
