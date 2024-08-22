@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 @AllArgsConstructor
 public class UserController {
 
@@ -18,14 +18,27 @@ public class UserController {
 
     public record ResponseMsg(String defaultMessage) {}
 
-    @GetMapping("/getall")
+    @GetMapping
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(this.userRepository.findAll());
     }
 
-    @PostMapping("/createuser")
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getUserById(@PathVariable Integer id) {
+        UserEntity user = this.userRepository.findById(id).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseMsg("User not found"));
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(user);
+    }
+
+    @PostMapping
     public ResponseEntity<?> addUser(@RequestBody @Valid UserEntity user, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity
@@ -46,7 +59,7 @@ public class UserController {
                 .build();
     }
 
-    @PatchMapping("/updateuser/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserEntity updatedUser) {
         UserEntity existingUser = this.userRepository.findById(id).orElse(null);
 
@@ -58,13 +71,14 @@ public class UserController {
 
         //update info here
 
+
         this.userRepository.save(existingUser);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .build();
     }
 
-    @DeleteMapping("/deleteuser/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
         this.userRepository.deleteById(id);
 
