@@ -1,6 +1,5 @@
 package com.brasa.user;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +19,17 @@ public class UserController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<List<UserEntity>> getAllUsers() {
-        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        //return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
+        List<UserEntity> users =userRepository.findAll();
+
+        /*List<UserResponse> response = new ArrayList<>();
+        for (UserEntity u : users) {
+            response.add(new UserResponse(u.getId(), u.getUsername(), u.getEmail()));
+        }*/
+
+        //return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAllUsersWithoutPassword());
     }
 
     @GetMapping("/{id}")
@@ -30,7 +39,8 @@ public class UserController {
         if (optionalUser.isPresent()) {
             return ResponseEntity.status(HttpStatus.OK).body(optionalUser);
         } else {
-            throw new EntityNotFoundException("User with id " + id + " not found");
+            //throw new EntityNotFoundException("User with id " + id + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 
