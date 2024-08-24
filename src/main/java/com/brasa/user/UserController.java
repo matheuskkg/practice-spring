@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,15 +19,6 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
-        //return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAll());
-        List<UserEntity> users =userRepository.findAll();
-
-        /*List<UserResponse> response = new ArrayList<>();
-        for (UserEntity u : users) {
-            response.add(new UserResponse(u.getId(), u.getUsername(), u.getEmail()));
-        }*/
-
-        //return ResponseEntity.status(HttpStatus.OK).body(response);
         return ResponseEntity.status(HttpStatus.OK).body(userRepository.findAllUsersWithoutPassword());
     }
 

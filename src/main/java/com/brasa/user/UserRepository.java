@@ -11,6 +11,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
     boolean existsByEmail(String email);
 
-    @Query(value = "SELECT id, username, email FROM user_entity", nativeQuery = true)
+    @Query("SELECT new com.brasa.user.UserResponse(u.id, u.username, u.email) FROM UserEntity u")
     List<UserResponse> findAllUsersWithoutPassword();
 }
