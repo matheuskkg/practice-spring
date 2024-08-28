@@ -1,10 +1,9 @@
-package com.brasa.user;
+package com.mkkg.user;
 
-import jakarta.validation.Valid;
+import com.mkkg.user.dto.UserResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,43 +33,15 @@ public class UserController {
         }
     }
 
-    private void verifyRequest(UserRequest request, BindingResult errors) {
-        //The @Column(unique = true) on the Entity declaration will check for uniqueness on the database,
-        //but it may be bypassed, therefore the application should also check for it
-        if (userRepository.existsByUsername(request.username())) {
-            errors.rejectValue("username", "Unique", "username in use");
-        }
-
-        if (userRepository.existsByEmail(request.email())) {
-            errors.rejectValue("email", "Unique", "email in use");
-        }
-    }
-
-    @PostMapping
-    public ResponseEntity<?> addUser(@RequestBody @Valid UserRequest request, BindingResult errors) {
-        verifyRequest(request, errors);
-
-        if (errors.hasErrors()) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(errors.getAllErrors());
-        }
-
-        UserEntity user = new UserEntity(request);
-        userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody @Valid UserRequest request, BindingResult errors) {
+    //not sure where this should be
+    /*@PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody @Valid UserRegisterRequest request, BindingResult errors) {
         Optional<UserEntity> optionalUser = userRepository.findById(id);
 
         verifyRequest(request, errors);
 
         if (errors.hasErrors()) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(errors.getAllErrors());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errors.getAllErrors());
         }
 
         if (optionalUser.isPresent()) {
@@ -83,15 +54,13 @@ public class UserController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-    }
+    }*/
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
         userRepository.deleteById(id);
 
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .build();
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 }

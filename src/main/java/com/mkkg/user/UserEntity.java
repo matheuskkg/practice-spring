@@ -1,5 +1,6 @@
-package com.brasa.user;
+package com.mkkg.user;
 
+import com.mkkg.user.dto.UserRegisterRequest;
 import jakarta.persistence.*;
 
 import lombok.Data;
@@ -29,7 +30,7 @@ public class UserEntity {
     @Column(unique = true)
     private String email;
 
-    public UserEntity(UserRequest request) {
+    public UserEntity(UserRegisterRequest request) {
         this.username = request.username();
         this.password = request.password();
         this.email = request.email();

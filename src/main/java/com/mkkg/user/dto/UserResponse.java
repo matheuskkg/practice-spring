@@ -1,4 +1,4 @@
-package com.brasa.user;
+package com.mkkg.user.dto;
 
 public record UserResponse (
 

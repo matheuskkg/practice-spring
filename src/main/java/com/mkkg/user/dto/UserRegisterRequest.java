@@ -1,9 +1,9 @@
-package com.brasa.user;
+package com.mkkg.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record UserRequest(
+public record UserRegisterRequest(
 
         @NotBlank
         String username,
